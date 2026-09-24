@@ -1,0 +1,460 @@
+# ---------------------------------------------------------------
+# Zisternen-Füllstand, Akkubetrieb, eine Messung pro Stunde
+#
+# Hardware:  Seeed Studio XIAO ESP32C6
+#            ADS1115 (I2C, 0x48), SHT4x (I2C, 0x44)
+#            Pegelsonde 0-2 m, 4-20 mA, 2-Leiter, belüftet
+#            100 Ohm 0,1 % Bürdewiderstand
+#            Step-up 3,7 V -> 15 V, geschaltet über AO3401 + 2N7000
+#            LiPo 103450
+#
+# Schaltplan und Pins:  docs/verdrahtung.md
+# Warum es so gebaut ist: docs/faq.md
+# Gemessene Zahlen:     docs/messungen.md
+#
+# Braucht ESPHome 2026.8.0 oder neuer. Ältere Versionen nehmen jedes
+# Update über Funk wieder zurück. Begründung: docs/faq.md
+# ---------------------------------------------------------------
+
+substitutions:
+  geraet: zisterne
+
+  # DIESE DREI WERTE ANPASSEN - siehe docs/inbetriebnahme.md
+
+  # Grundfläche der Zisterne in m2. Beispiel: 4500 L bei 2,00 m -> 2.25
+  flaeche_m2: "2.25"
+
+  # Maximale Wasserhöhe in m. Muss zum Messbereich der Sonde passen.
+  max_hoehe_m: "2.00"
+
+  # Aufhängehöhe der Sonde über dem Boden, in m. Wird addiert.
+  # Zum Testen auf 0.00 setzen, beim Einbau auf den echten Wert.
+  sonden_offset_m: "0.10"
+
+  # ---
+
+  einschwingzeit: 800ms
+
+  # Nachtruhe. In diesem Fenster wird nicht gemessen.
+  # nacht_weckzeit ist die EINZIGE Quelle für das Ende des Fensters -
+  # das Skript "schlafen_gehen" liest die Stunde daraus.
+  # Abschalten: nacht_von auf "24". Details: docs/betrieb.md
+  nacht_von: "21"
+  nacht_weckzeit: "06:00:00"
+
+# ---------------------------------------------------------------
+
+esphome:
+  name: ${geraet}
+
+  on_boot:
+    # Antenne umschalten, BEVOR das WLAN startet.
+    # Priorität 700: nach den GPIO-Ausgängen (800), vor WiFi (250).
+    - priority: 700
+      then:
+        - output.turn_on: rf_switch_en
+        - output.turn_on: rf_antenne_extern
+
+    - priority: -100
+      then:
+        # Schlafdauer aus dem Regler in Home Assistant übernehmen.
+        # Muss VOR jedem Einschlafen passieren - auch die 45-s-Notbremse
+        # benutzt danach diesen Wert.
+        - lambda: |-
+            float m = id(mess_intervall).state;
+            if (!(m >= 5.0f && m <= 720.0f)) m = 60.0f;   // NaN oder Unsinn
+            id(schlaf).set_sleep_duration((uint32_t) (m * 60000.0f));
+
+        - script.execute: mess_zyklus
+
+esp32:
+  board: seeed_xiao_esp32c6
+  framework:
+    type: esp-idf        # ESP32-C6 läuft nur mit esp-idf, nicht mit Arduino
+
+# ---------------------------------------------------------------
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # fast_connect und feste IP sparen zusammen 2-3 Sekunden Wachzeit.
+  fast_connect: true
+  # Eigene IP eintragen, dann die Kommentarzeichen entfernen:
+  # manual_ip:
+  #   static_ip: 192.168.1.50
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+
+api:
+  encryption:
+    key: !secret api_key
+
+# Die Uhrzeit kommt aus Home Assistant und wird NUR für die Nachtruhe
+# gebraucht. Ist HA weg, ist sie ungültig - dann fällt das Gerät auf den
+# normalen Takt zurück. Siehe Skript "schlafen_gehen".
+time:
+  - platform: homeassistant
+    id: ha_zeit
+
+# Steht nur während eines laufenden Updates auf true.
+globals:
+  - id: ota_laeuft
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+
+ota:
+  - platform: esphome
+    # Leerer encryption-Block: erbt den Schlüssel aus "api" oben.
+    # "password" und "encryption" schliessen sich gegenseitig aus.
+    encryption:
+
+    # Während eines Updates darf NICHTS einschlafen - ein halb
+    # geschriebener Flash ist der schlimmste Fall, den dieses Gerät
+    # haben kann. Es gibt zwei Wege in den Schlaf, und "prevent"
+    # blockiert nur einen. Gegen den zweiten hilft das Flag.
+    # Begründung: docs/betrieb.md, "Die zwei Wege in den Tiefschlaf"
+    on_begin:
+      - lambda: 'id(ota_laeuft) = true;'
+      - deep_sleep.prevent: schlaf
+
+    # Nach einem FEHLGESCHLAGENEN Update muss das Gerät wieder
+    # einschlafen können, sonst leert ein Abbruch den Akku.
+    on_error:
+      - lambda: 'id(ota_laeuft) = false;'
+      - deep_sleep.allow: schlaf
+      - if:
+          condition:
+            binary_sensor.is_off: ha_wach_halten
+          then:
+            - script.execute: schlafen_gehen
+
+logger:
+  level: INFO
+  # Serielle Ausgabe aus, spart Strom. Zum Debuggen über USB diese
+  # Zeile auskommentieren und level auf DEBUG stellen - sonst schweigt
+  # das Board am USB komplett.
+  baud_rate: 0
+
+# Zum Wachhalten beim Einrichten: diesen Block auskommentieren, dazu
+# die beiden "deep_sleep.enter" im Skript "schlafen_gehen". Nur die
+# Sperre zu setzen reicht NICHT. Begründung: docs/faq.md
+deep_sleep:
+  id: schlaf
+  run_duration: 45s      # Notbremse, falls das WLAN nicht kommt
+  sleep_duration: 60min  # nur der Startwert, on_boot überschreibt ihn
+
+# ---------------------------------------------------------------
+
+script:
+  # Ein kompletter Messzyklus: messen, Werte rausschicken, dann nach dem
+  # Helfer richten. Gerufen vom on_boot UND vom Knopf "Messen und
+  # syncen" - deshalb steht der Ablauf nur einmal hier.
+  #
+  # mode: restart: Ein erneuter Druck startet das 30-Minuten-Fenster
+  # neu, statt einen zweiten Timer danebenzulegen.
+  - id: mess_zyklus
+    mode: restart
+    then:
+      # 1. Akku ZUERST, und zwar ohne Last. Läuft der Step-up schon,
+      #    sackt die gemessene Spannung ab. Nur der Teiler muss an sein.
+      - output.turn_on: akku_teiler
+      - delay: 50ms
+      - component.update: akku_v
+
+      # 2. Jetzt die Sonde. Der Step-up braucht Zeit zum Einschwingen.
+      - output.turn_on: sonde_power
+      - delay: ${einschwingzeit}
+
+      # 3. 7 Werte: die ersten 2 werden verworfen, aus den restlichen 5
+      #    nimmt der Median-Filter die Mitte.
+      - repeat:
+          count: 7
+          then:
+            - component.update: shunt_v
+            - delay: 60ms
+
+      # 4. Klima in der Box. Hängt direkt an 3V3, braucht den Step-up nicht.
+      - component.update: klima
+
+      # 5. Strom sofort wieder aus
+      - output.turn_off: sonde_power
+      - output.turn_off: akku_teiler
+
+      # 6. Warten, bis Home Assistant die Werte hat. PFLICHT, nicht
+      #    Kosmetik: sonst schläft das Gerät unter Umständen, bevor die
+      #    gerade gemessenen Werte rausgegangen sind.
+      - wait_until:
+          condition:
+            api.connected:
+          timeout: 20s
+      - delay: 3s
+
+      # 7. Nach dem Helfer richten. Hier ist die API verbunden, der
+      #    Zustand von "ha_wach_halten" ist also da.
+      - if:
+          condition:
+            binary_sensor.is_on: ha_wach_halten
+          then:
+            - deep_sleep.prevent: schlaf   # sonst greift die 45-s-Notbremse
+            - delay: 30min                 # Sicherheitsnetz gegen ein vergessenes AN
+            - script.execute: schlafen_gehen
+          else:
+            - script.execute: schlafen_gehen
+
+  # Der EINZIGE Weg in den Schlaf. Alle Stellen rufen dieses Skript.
+  #
+  # Die eigene Prüfung auf is_valid() ist nötig, weil ESPHomes "until:"
+  # ohne Gültigkeitsprüfung rechnet. Ohne synchronisierte Uhr kann die
+  # Subtraktion überlaufen und das Gerät bis zu 50 Tage schlafen.
+  # Also: keine gültige Zeit -> normaler Takt. Begründung: docs/faq.md
+  - id: schlafen_gehen
+    then:
+      - if:
+          condition:
+            lambda: 'return id(ota_laeuft);'
+          then:
+            - logger.log: "Update laeuft - Schlafen abgebrochen"
+          else:
+            - if:
+                condition:
+                  lambda: |-
+                    auto t = id(ha_zeit).now();
+                    if (!t.is_valid()) return false;     // keine Uhr -> normaler Takt
+                    // Endstunde aus nacht_weckzeit lesen, damit es nur EINE
+                    // Quelle gibt. Vertraegt "6:00:00" und "06:00:00".
+                    const char *w = "${nacht_weckzeit}";
+                    int bis = 0;
+                    for (const char *c = w; *c && *c != ':'; ++c) bis = bis * 10 + (*c - '0');
+                    return t.hour >= ${nacht_von} || t.hour < bis;
+                then:
+                  - deep_sleep.enter:
+                      id: schlaf
+                      until: ${nacht_weckzeit}
+                      time_id: ha_zeit
+                else:
+                  - deep_sleep.enter: schlaf
+
+# ---------------------------------------------------------------
+
+i2c:
+  sda: GPIO20         # D9
+  scl: GPIO18         # D10
+  frequency: 100kHz
+  scan: true
+
+output:
+  # Antennen-Umschalter des XIAO ESP32C6, interne Pins.
+  # GPIO3 ist "active low": inverted, damit turn_on = LOW = Switch an.
+  - platform: gpio
+    id: rf_switch_en
+    pin: GPIO3
+    inverted: true
+  - platform: gpio
+    id: rf_antenne_extern   # HIGH = externe u.FL-Antenne
+    pin: GPIO14
+
+  # D0 -> 2N7000 Gate -> AO3401 -> Step-up 15 V -> Sonde
+  - platform: gpio
+    id: sonde_power
+    pin: GPIO0
+
+  # D5 = unteres Ende des Akku-Spannungsteilers.
+  # "an" bedeutet: Pin auf LOW, Teiler aktiv.
+  - platform: gpio
+    id: akku_teiler
+    pin: GPIO23
+    inverted: true
+
+ads1115:
+  - address: 0x48
+    continuous_mode: false
+
+# ---------------------------------------------------------------
+
+# Die Entitätsnamen sind bewusst kurz ("Akku", nicht "Zisterne Akku").
+# Home Assistant stellt den Gerätenamen ohnehin voran.
+sensor:
+  # Rohwert: Spannung über dem 100-Ohm-Bürdewiderstand.
+  # 4 mA -> 0,400 V -> 0,00 m    20 mA -> 2,000 V -> 2,00 m
+  - platform: ads1115
+    id: shunt_v
+    multiplexer: A0_GND
+    gain: 4.096
+    update_interval: never
+    internal: true
+    filters:
+      - skip_initial: 2
+      - median:
+          window_size: 5
+          send_every: 5
+          send_first_at: 5
+    on_value:
+      then:
+        - component.update: pegel
+        - component.update: inhalt
+        - component.update: prozent
+
+  # Rohwert: halbe Akkuspannung (Teiler 220k / 220k)
+  - platform: ads1115
+    id: akku_v
+    multiplexer: A1_GND
+    gain: 4.096
+    update_interval: never
+    internal: true
+    on_value:
+      then:
+        - component.update: akku
+
+  - platform: template
+    id: pegel
+    name: "Pegel"
+    unit_of_measurement: "m"
+    icon: "mdi:waves-arrow-up"
+    accuracy_decimals: 3
+    update_interval: never
+    lambda: |-
+      float mA = id(shunt_v).state * 10.0f;        // U / 100 Ohm, in mA
+      float h  = (mA - 4.0f) / 16.0f * ${max_hoehe_m};
+      h += ${sonden_offset_m};
+      if (h < 0.0f) h = 0.0f;
+      return h;
+
+  - platform: template
+    id: inhalt
+    name: "Inhalt"
+    unit_of_measurement: "L"
+    device_class: water
+    state_class: measurement
+    icon: "mdi:water"
+    accuracy_decimals: 0
+    update_interval: never
+    lambda: 'return id(pegel).state * ${flaeche_m2} * 1000.0f;'
+
+  - platform: template
+    id: prozent
+    name: "Fuellstand"
+    unit_of_measurement: "%"
+    icon: "mdi:car-coolant-level"
+    accuracy_decimals: 0
+    update_interval: never
+    lambda: |-
+      float p = id(pegel).state / ${max_hoehe_m} * 100.0f;
+      if (p < 0.0f)   p = 0.0f;
+      if (p > 100.0f) p = 100.0f;
+      return p;
+
+  - platform: template
+    id: akku
+    name: "Akku"
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 3
+    update_interval: never
+    # Der Faktor ist KALIBRIERT, nicht der Nennwert 2.0. Zwei
+    # 1-%-Widerstaende liegen zusammen leicht daneben.
+    # Eigenen Wert ermitteln: docs/inbetriebnahme.md
+    lambda: 'return id(akku_v).state * 2.0316f;'
+
+  # LiPo-Spannung ist keine Gerade, in der Mitte ist die Kurve flach -
+  # deshalb stückweise linear (method: exact). Gilt ohne Last.
+  # Der Endpunkt ist 4.18 und nicht 4.20: die Zelle hält 4,20 V nur am
+  # Ladegerät. Begründung: docs/faq.md
+  - platform: copy
+    source_id: akku
+    name: "Akku Ladestand"
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - calibrate_linear:
+          method: exact
+          datapoints:
+            - 3.30 -> 0.0
+            - 3.50 -> 5.0
+            - 3.65 -> 10.0
+            - 3.70 -> 20.0
+            - 3.74 -> 30.0
+            - 3.78 -> 40.0
+            - 3.82 -> 50.0
+            - 3.88 -> 60.0
+            - 3.95 -> 70.0
+            - 4.00 -> 80.0
+            - 4.10 -> 90.0
+            - 4.18 -> 100.0
+      - clamp:
+          min_value: 0.0
+          max_value: 100.0
+
+  # Klima IN der Box - Frühwarnung vor Kondenswasser, kein Messwert für
+  # die Zisterne. Heizung aus, sie würde nur Akku kosten.
+  - platform: sht4x
+    id: klima
+    address: 0x44
+    update_interval: never   # wird im Skript "mess_zyklus" angestossen
+    heater_max_duty: 0.0
+    temperature:
+      id: box_temperatur
+      name: "Box Temperatur"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+      accuracy_decimals: 1
+    humidity:
+      id: box_feuchte
+      name: "Box Feuchte"
+      unit_of_measurement: "%"
+      device_class: humidity
+      state_class: measurement
+      accuracy_decimals: 0
+
+  - platform: wifi_signal
+    id: rssi
+    name: "WLAN"
+    update_interval: never
+
+# ---------------------------------------------------------------
+
+# Wachhalter. Der Zustand liegt in HOME ASSISTANT, nicht auf dem Gerät -
+# deshalb lässt er sich jederzeit umlegen, auch im Schlaf. Anlegen als
+# Helfer vom Typ "Umschalter", siehe docs/inbetriebnahme.md.
+# Gibt es den Helfer nicht, bleibt der Zustand "aus" und das Gerät
+# schläft normal weiter. Das ist die sichere Richtung.
+binary_sensor:
+  - platform: homeassistant
+    id: ha_wach_halten
+    entity_id: input_boolean.zisterne_wach_halten
+
+# Messintervall, aus Home Assistant einstellbar. Wirkt ab dem NÄCHSTEN
+# Einschlafen. Was es an Laufzeit kostet: docs/betrieb.md
+number:
+  - platform: template
+    id: mess_intervall
+    name: "Messintervall"
+    icon: "mdi:timer-cog-outline"
+    unit_of_measurement: "min"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    min_value: 5
+    max_value: 720
+    step: 5
+    mode: box
+
+# Ein kompletter Messzyklus auf Knopfdruck.
+#   Helfer AN  -> misst und bleibt wach, das Fenster startet neu
+#   Helfer AUS -> misst, schickt die Werte raus und geht schlafen
+#
+# Bewusst ein Button und KEIN Schalter: ein Schalter hätte einen
+# Zustand, der beim Start wiederhergestellt wird - und das feuert die
+# Aktion. Das Gerät schlief dadurch 2 s nach jedem Boot ein.
+# Begründung: docs/faq.md
+button:
+  - platform: template
+    name: "Messen und syncen"
+    icon: "mdi:sync"
+    on_press:
+      - script.execute: mess_zyklus

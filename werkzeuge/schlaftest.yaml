@@ -1,0 +1,53 @@
+# ---------------------------------------------------------------
+# WERKZEUG fuer Pruefplan Test 4 - siehe docs/pruefplan.md
+#
+# schlaftest.yaml - misst den Tiefschlafstrom des XIAO ESP32C6
+#
+# Aufbau:  XIAO + Akku. Sonst nichts.
+#          Multimeter in der Plusleitung, Krokoklemme parallel.
+#
+# Ablesen: LED blinkt = wach.  LED aus = schlaeft -> jetzt messen.
+#
+# Ziel:    unter 100 uA. Erwartet werden ca. 15 uA.
+#
+# Kein WLAN, kein OTA. Das haelt den Test einfach. Der Schlafstrom
+# haengt nicht vom WLAN ab - im Tiefschlaf ist das Funkmodul aus.
+# Geflasht wird per USB im Bootloader-Modus.
+# ---------------------------------------------------------------
+
+esphome:
+  name: schlaftest
+
+  on_boot:
+    - priority: -100
+      then:
+        - delay: 30s              # 30 s blinken, dann schlafen
+        - output.turn_off: led
+        - deep_sleep.enter: schlaf
+
+esp32:
+  board: seeed_xiao_esp32c6
+  framework:
+    type: esp-idf
+
+logger:
+  level: INFO
+  baud_rate: 0                    # serielle Ausgabe aus, spart Strom
+
+deep_sleep:
+  id: schlaf
+  run_duration: 60s               # Notbremse
+  sleep_duration: 10min           # danach wacht er kurz auf
+
+output:
+  - platform: gpio
+    id: led
+    pin: GPIO15
+
+interval:
+  # Blinken heisst: Board ist wach.
+  - interval: 1s
+    then:
+      - output.turn_on: led
+      - delay: 500ms
+      - output.turn_off: led

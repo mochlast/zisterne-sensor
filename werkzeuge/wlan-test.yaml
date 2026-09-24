@@ -1,0 +1,82 @@
+# ---------------------------------------------------------------
+# WERKZEUG fuer Pruefplan Test 1 - siehe docs/pruefplan.md
+#
+# SCHRITT 0: WLAN-Test im Zisternenschacht
+#
+# Ziel: Herausfinden, ob WLAN unter dem Kunststoffdeckel ankommt.
+# Kein Sensor noetig. Nur Board + Powerbank.
+#
+# Board: irgendein ESP32, das du schon hast. Muss nicht das Zielboard sein.
+#
+# Ablauf:
+#   1. esphome run werkzeuge/wlan-test.yaml  (Board per USB anstecken)
+#   2. Board an Powerbank, in eine Plastiktuete, in den Schacht
+#   3. Deckel zu, 10 Minuten warten
+#   4. In Home Assistant "Zisterne Test WLAN" ansehen
+#
+# Bewertung:
+#   besser als -70 dBm   -> super, weiter wie geplant
+#   -70 bis -80 dBm      -> Board mit IPEX-Buchse + externe Antenne
+#   schlechter / keine   -> Plan B (Antenne, naeherer AP, dann LoRa)
+#
+# ACHTUNG, wenn du hier auf "seeed_xiao_esp32c6" umstellst:
+# Diese Datei schaltet die Antenne NICHT um. Der XIAO funkt dann ueber
+# seine interne Keramikantenne, nicht ueber die u.FL-Buchse, und der
+# gemessene RSSI ist fuer den Endaufbau wertlos.
+#
+# Die Messung mit dem fertigen Aufbau laeuft deshalb ueber die echte
+# Konfiguration "zisterne.yaml" - nur die schaltet die Antenne um.
+# Diese Datei ist fuer die Grobmessung VOR dem Einkauf, mit irgendeinem
+# ESP32, den du herumliegen hast.
+# ---------------------------------------------------------------
+
+esphome:
+  name: zisterne-test
+
+# Nimm irgendein ESP32-Board, das du rumliegen hast.
+# "esp32dev" passt auf fast alle DevKit-Boards (ESP32-WROOM-32).
+#
+# Falls dein Board nicht startet, probiere stattdessen:
+#   esp32-c3-devkitm-1   fuer ESP32-C3
+#   esp32-s3-devkitc-1   fuer ESP32-S3
+#   seeed_xiao_esp32c6   fuer XIAO ESP32C6
+#   dfrobot_firebeetle2_esp32e   fuer FireBeetle 2 ESP32-E
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Hier stehen die Zugangsdaten absichtlich direkt drin und nicht in
+# secrets.yaml: Dieses Werkzeug laeuft auf irgendeinem ESP32, meist von
+# einem anderen Ordner aus, und soll ohne Vorbereitung startklar sein.
+# Nach dem Test die Datei wieder auf die Platzhalter zuruecksetzen.
+wifi:
+  ssid: "DeinWLAN"
+  password: "DeinPasswort"
+
+api:
+  # Neuen Schluessel erzeugen mit:  openssl rand -base64 32
+  encryption:
+    key: "QklUVEUtRUlHRU5FTi1TQ0hMVUVTU0VMLUVSWkVVR0U="   # PLATZHALTER - ERSETZEN
+
+ota:
+  - platform: esphome
+    encryption:
+
+logger:
+  level: INFO
+
+sensor:
+  - platform: wifi_signal
+    name: "Zisterne Test WLAN"
+    update_interval: 10s
+
+  - platform: uptime
+    name: "Zisterne Test Laufzeit"
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "Zisterne Test IP"
+    bssid:
+      name: "Zisterne Test Accesspoint"

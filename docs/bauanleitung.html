@@ -1,0 +1,1484 @@
+<title>Zisternensonde</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  /* ---------- Tokens: Licht ---------- */
+  :root {
+    --ground:      #EFF3F4;
+    --surface:     #FFFFFF;
+    --surface-2:   #E4EBED;
+    --ink:         #14232B;
+    --ink-soft:    #56686F;
+    --line:        #CCD9DD;
+    --line-strong: #9EB1B8;
+    --accent:      #0E7C9B;
+    --accent-soft: #DCEEF3;
+    --warn:        #9A4A08;
+    --warn-soft:   #FBEBDD;
+    --ok:          #1D6B4F;
+    --ok-soft:     #DDEFE7;
+
+    --wire-pos:    #BE2B2B;
+    --wire-gnd:    #2A3A42;
+    --wire-sig:    #10639F;
+    --wire-brown:  #7A4A21;
+
+    --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --f-body:    "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --f-mono:    "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+    --radius: 4px;
+    --measure: 68ch;
+  }
+
+  /* ---------- Tokens: Dunkel (System) ---------- */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #0E181D;
+      --surface:     #16242B;
+      --surface-2:   #1E3038;
+      --ink:         #E4EDF0;
+      --ink-soft:    #93A8B1;
+      --line:        #2B3F48;
+      --line-strong: #4A626C;
+      --accent:      #4FC3E2;
+      --accent-soft: #0E323E;
+      --warn:        #E9A159;
+      --warn-soft:   #37231044;
+      --ok:          #6BCFA6;
+      --ok-soft:     #0F2C22;
+
+      --wire-pos:    #FF7B7B;
+      --wire-gnd:    #A6BAC2;
+      --wire-sig:    #6FB8F2;
+      --wire-brown:  #C79463;
+    }
+  }
+
+  /* ---------- Tokens: Dunkel (explizit) ---------- */
+  :root[data-theme="dark"] {
+    --ground:      #0E181D;
+    --surface:     #16242B;
+    --surface-2:   #1E3038;
+    --ink:         #E4EDF0;
+    --ink-soft:    #93A8B1;
+    --line:        #2B3F48;
+    --line-strong: #4A626C;
+    --accent:      #4FC3E2;
+    --accent-soft: #0E323E;
+    --warn:        #E9A159;
+    --warn-soft:   #37231044;
+    --ok:          #6BCFA6;
+    --ok-soft:     #0F2C22;
+
+    --wire-pos:    #FF7B7B;
+    --wire-gnd:    #A6BAC2;
+    --wire-sig:    #6FB8F2;
+    --wire-brown:  #C79463;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 20px 96px;
+  }
+
+  /* ---------- Kopf ---------- */
+  .masthead {
+    border-bottom: 3px solid var(--ink);
+    padding: 40px 0 18px;
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(2.6rem, 8vw, 4.4rem);
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 1.08rem;
+    color: var(--ink-soft);
+    max-width: var(--measure);
+    margin: 0;
+  }
+
+  /* ---------- Struktur ---------- */
+  section { margin: 0 0 56px; }
+
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(1.7rem, 4vw, 2.3rem);
+    line-height: 1.05;
+    letter-spacing: 0.005em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 1.35rem;
+    line-height: 1.15;
+    margin: 32px 0 8px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-top: 1px solid var(--line-strong);
+    padding-top: 14px;
+    margin-bottom: 20px;
+  }
+  .section-num {
+    font-family: var(--f-mono);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--accent);
+    padding-top: 6px;
+    flex: none;
+  }
+  p { max-width: var(--measure); margin: 0 0 14px; }
+  ul, ol { max-width: var(--measure); padding-left: 22px; margin: 0 0 16px; }
+  li { margin-bottom: 7px; }
+  strong { font-weight: 600; }
+  code, .pin {
+    font-family: var(--f-mono);
+    font-size: 0.88em;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  /* Bloecke mit fester Breite, z. B. Pinbelegungen.
+     Das "white-space: nowrap" von code muss hier wieder weg,
+     sonst laufen alle Zeilen in eine. */
+  pre {
+    max-width: var(--measure);
+    margin: 0 0 14px;
+    padding: 12px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow-x: auto;
+  }
+  pre code {
+    display: block;
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    white-space: pre;
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  /* ---------- Figuren ---------- */
+  figure {
+    margin: 24px 0 28px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px 20px 14px;
+    overflow-x: auto;
+  }
+  figure svg { display: block; width: 100%; max-width: 100%; height: auto; color: var(--ink); }
+  figcaption {
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    max-width: var(--measure);
+  }
+
+  /* SVG-Stile */
+  .s-box   { fill: var(--surface-2); stroke: currentColor; stroke-width: 1.5; }
+  .s-box-a { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+  .s-lbl   { fill: currentColor; font-family: var(--f-body); font-size: 13px; font-weight: 500; }
+  .s-lbl-b { fill: currentColor; font-family: var(--f-display); font-size: 16px; font-weight: 600; }
+  .s-sub   { fill: var(--ink-soft); font-family: var(--f-mono); font-size: 11px; }
+  .s-note  { fill: var(--ink-soft); font-family: var(--f-body); font-size: 11.5px; font-style: italic; }
+  .s-pin   { fill: currentColor; font-family: var(--f-mono); font-size: 11px; font-weight: 600; }
+  .w-pos   { stroke: var(--wire-pos);   stroke-width: 2.5; fill: none; }
+  .w-gnd   { stroke: var(--wire-gnd);   stroke-width: 2.5; fill: none; }
+  .w-sig   { stroke: var(--wire-sig);   stroke-width: 2.5; fill: none; }
+  .w-brown { stroke: var(--wire-brown); stroke-width: 2.5; fill: none; }
+  .w-ctl   { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 6 4; fill: none; }
+  .t-pos   { fill: var(--wire-pos); }
+  .t-gnd   { fill: var(--wire-gnd); }
+  .t-sig   { fill: var(--wire-sig); }
+  .t-acc   { fill: var(--accent); }
+  .node    { fill: currentColor; }
+
+  /* ---------- Tabellen ---------- */
+  .table-scroll { overflow-x: auto; margin: 18px 0 24px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num, th.num { font-variant-numeric: tabular-nums; font-family: var(--f-mono); white-space: nowrap; }
+  .chk { width: 34px; text-align: center; }
+  input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; margin: 2px 0 0; }
+  input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- Hinweiskästen ---------- */
+  .note {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 14px 16px;
+    margin: 20px 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    max-width: var(--measure);
+  }
+  .note.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .note.ok   { border-left-color: var(--ok);   background: var(--ok-soft); }
+  .note p:last-child { margin-bottom: 0; }
+  .note-title {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Schritte ---------- */
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin: 0 0 18px;
+  }
+  .step-head { display: flex; gap: 14px; align-items: baseline; margin-bottom: 10px; }
+  .step-n {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--accent);
+    flex: none;
+    min-width: 34px;
+    font-variant-numeric: tabular-nums;
+  }
+  .step h3 { margin: 0; }
+  .check {
+    margin-top: 16px;
+    padding: 11px 14px;
+    background: var(--ok-soft);
+    border-left: 4px solid var(--ok);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+  .check p { margin: 0; font-size: 0.94rem; }
+  .check-label {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ok);
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  /* ---------- Legende ---------- */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0 0 22px; padding: 0; list-style: none; max-width: none; }
+  .legend li { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 0.88rem; }
+  .swatch { width: 26px; height: 4px; border-radius: 2px; flex: none; }
+
+  @media (max-width: 620px) {
+    .step { padding: 18px 16px; }
+    figure { padding: 14px 12px 10px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Bauanleitung · Stand September 2026</p>
+    <h1>Zisternensonde</h1>
+    <p class="standfirst">
+      Füllstandsmessung für eine Betonzisterne. Akkubetrieb, eine Messung pro Stunde,
+      Laufzeit über ein Jahr. Diese Seite zeigt jede Verbindung einzeln — du musst
+      keinen Schaltplan lesen können.
+    </p>
+  </header>
+
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2>Was das Ding macht</h2>
+    </div>
+
+    <p>
+      Der Sensor hängt im Wasser und misst den Druck. Je tiefer das Wasser, desto
+      höher der Druck. Der Sensor wandelt das in einen Strom zwischen 4 und 20
+      Milliampere um. Diesen Strom messen wir und rechnen ihn in Zentimeter um.
+    </p>
+    <p>
+      Der Trick beim Stromsparen: Fast die ganze Zeit ist alles aus. Einmal pro
+      Stunde wacht der ESP auf, schaltet die Sonde für unter eine Sekunde ein,
+      misst, funkt den Wert nach Home Assistant und schläft wieder.
+    </p>
+    <p>
+      Ein zweiter, winziger Sensor sitzt <em>in</em> der Box: der
+      <strong>SHT41</strong>. Er misst Temperatur und Luftfeuchte der Luft um die
+      Platine herum. Über die Zisterne sagt er nichts. Er warnt dich, wenn das
+      Silica-Gel gesättigt ist — also <em>bevor</em> Kondenswasser die Elektronik
+      frisst.
+    </p>
+
+    <ul class="legend">
+      <li><span class="swatch" style="background:var(--wire-pos)"></span> Plus</li>
+      <li><span class="swatch" style="background:var(--wire-gnd)"></span> Masse (GND)</li>
+      <li><span class="swatch" style="background:var(--wire-sig)"></span> Messsignal</li>
+      <li><span class="swatch" style="background:var(--wire-brown)"></span> Sondenkabel</li>
+      <li><span class="swatch" style="background:var(--accent)"></span> Steuerleitung</li>
+    </ul>
+
+    <figure>
+      <svg viewBox="0 0 900 330" role="img" aria-label="Signalweg: Akku speist über einen Schalter den Step-Up, dieser die Sonde. Der Sondenstrom fließt durch den 100-Ohm-Widerstand nach Masse, der ADS1115 misst die Spannung darüber und meldet sie per I2C an den XIAO. Der XIAO steuert über D0 den Schalter.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"></path>
+          </marker>
+        </defs>
+
+        <!-- obere Reihe -->
+        <rect class="s-box" x="16"  y="34" width="132" height="62" rx="3"></rect>
+        <text class="s-lbl-b" x="82"  y="62"  text-anchor="middle">Akku</text>
+        <text class="s-sub"   x="82"  y="80"  text-anchor="middle">LiPo 3,7 V</text>
+
+        <rect class="s-box-a" x="220" y="34" width="132" height="62" rx="3"></rect>
+        <text class="s-lbl-b" x="286" y="62"  text-anchor="middle">Schalter</text>
+        <text class="s-sub"   x="286" y="80"  text-anchor="middle">2 MOSFETs</text>
+
+        <rect class="s-box" x="424" y="34" width="132" height="62" rx="3"></rect>
+        <text class="s-lbl-b" x="490" y="62"  text-anchor="middle">Step-Up</text>
+        <text class="s-sub"   x="490" y="80"  text-anchor="middle">Pololu 15 V</text>
+
+        <rect class="s-box" x="628" y="34" width="132" height="62" rx="3"></rect>
+        <text class="s-lbl-b" x="694" y="62"  text-anchor="middle">Sonde</text>
+        <text class="s-sub"   x="694" y="80"  text-anchor="middle">im Wasser</text>
+
+        <!-- untere Reihe -->
+        <rect class="s-box" x="628" y="224" width="132" height="62" rx="3"></rect>
+        <text class="s-lbl-b" x="694" y="252" text-anchor="middle">100 Ω</text>
+        <text class="s-sub"   x="694" y="270" text-anchor="middle">Widerstand</text>
+
+        <rect class="s-box" x="380" y="224" width="132" height="62" rx="3"></rect>
+        <text class="s-lbl-b" x="446" y="252" text-anchor="middle">ADS1115</text>
+        <text class="s-sub"   x="446" y="270" text-anchor="middle">16 Bit</text>
+
+        <rect class="s-box-a" x="132" y="224" width="132" height="62" rx="3"></rect>
+        <text class="s-lbl-b" x="198" y="252" text-anchor="middle">XIAO</text>
+        <text class="s-sub"   x="198" y="270" text-anchor="middle">ESP32C6</text>
+
+        <!-- Pfeile obere Reihe -->
+        <line class="w-pos" x1="148" y1="65" x2="212" y2="65" marker-end="url(#ar)"></line>
+        <text class="s-sub t-pos" x="180" y="52" text-anchor="middle">3,7 V</text>
+
+        <line class="w-pos" x1="352" y1="65" x2="416" y2="65" marker-end="url(#ar)"></line>
+        <text class="s-sub t-pos" x="384" y="52" text-anchor="middle">nur beim Messen</text>
+
+        <line class="w-pos" x1="556" y1="65" x2="620" y2="65" marker-end="url(#ar)"></line>
+        <text class="s-sub t-pos" x="588" y="52" text-anchor="middle">15 V</text>
+
+        <!-- Sonde runter zum Widerstand -->
+        <line class="w-sig" x1="694" y1="96" x2="694" y2="216" marker-end="url(#ar)"></line>
+        <text class="s-sub t-sig" x="706" y="160">4–20 mA</text>
+
+        <!-- Widerstand zum ADS -->
+        <line class="w-sig" x1="628" y1="255" x2="520" y2="255" marker-end="url(#ar)"></line>
+        <text class="s-sub t-sig" x="574" y="242" text-anchor="middle">0,4–2,0 V</text>
+
+        <!-- ADS zum XIAO -->
+        <line class="w-sig" x1="380" y1="255" x2="272" y2="255" marker-end="url(#ar)"></line>
+        <text class="s-sub t-sig" x="326" y="242" text-anchor="middle">I²C</text>
+
+        <!-- Steuerleitung XIAO -> Schalter -->
+        <polyline class="w-ctl" points="198,224 198,150 286,150 286,104" marker-end="url(#ar)"></polyline>
+        <text class="s-sub t-acc" x="212" y="142">D0 schaltet ein</text>
+
+        <!-- Masse -->
+        <line class="w-gnd" x1="760" y1="255" x2="820" y2="255"></line>
+        <line class="w-gnd" x1="820" y1="240" x2="820" y2="272"></line>
+        <line class="w-gnd" x1="812" y1="279" x2="828" y2="279"></line>
+        <line class="w-gnd" x1="816" y1="286" x2="824" y2="286"></line>
+        <text class="s-sub t-gnd" x="820" y="228" text-anchor="middle">GND</text>
+      </svg>
+      <figcaption>
+        Der Strom läuft im Kreis: aus dem Step-Up durch die Sonde, durch den
+        100-Ω-Widerstand nach Masse und zurück. Der ADS1115 misst nur ab, wie viel
+        Spannung am Widerstand abfällt. Die gestrichelte Linie ist keine
+        Stromversorgung, sondern das Ein-Signal vom ESP.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>Welches Beinchen ist welches</h2>
+    </div>
+
+    <p>
+      Bevor du lötest: Bei den drei kleinen Bauteilen ist die Reihenfolge der
+      Anschlüsse entscheidend. Falsch herum eingebaut funktionieren sie nicht oder
+      gehen kaputt.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 900 300" role="img" aria-label="Pinbelegungen: XIAO ESP32C6 mit vierzehn Pins, N-Kanal-MOSFET im TO-92-Gehäuse mit Source, Gate, Drain von links, und AO3401 auf der SOT-23-Adapterplatine mit Pin 1 Gate, Pin 2 Source, Pin 3 Drain.">
+        <!-- XIAO -->
+        <text class="s-lbl-b" x="20" y="24">XIAO ESP32C6</text>
+        <text class="s-note"  x="20" y="42">von oben, USB-Buchse nach oben</text>
+
+        <rect class="s-box" x="60" y="60" width="120" height="196" rx="4"></rect>
+        <rect x="98" y="52" width="44" height="14" rx="3" fill="var(--line-strong)"></rect>
+        <text class="s-sub" x="120" y="86" text-anchor="middle">USB-C</text>
+        <circle cx="120" cy="196" r="17" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+        <text class="s-sub" x="120" y="200" text-anchor="middle">u.FL</text>
+
+        <!-- linke Pins -->
+        <g>
+          <rect x="46" y="104" width="14" height="9" fill="var(--accent)"></rect>
+          <text class="s-pin t-acc" x="40" y="112" text-anchor="end">D0</text>
+          <rect x="46" y="124" width="14" height="9" fill="var(--line-strong)"></rect>
+          <text class="s-pin" x="40" y="132" text-anchor="end">D1</text>
+          <rect x="46" y="144" width="14" height="9" fill="var(--line-strong)"></rect>
+          <text class="s-pin" x="40" y="152" text-anchor="end">D2</text>
+          <rect x="46" y="164" width="14" height="9" fill="var(--line-strong)"></rect>
+          <text class="s-pin" x="40" y="172" text-anchor="end">D3</text>
+          <rect x="46" y="184" width="14" height="9" fill="var(--line-strong)"></rect>
+          <text class="s-pin" x="40" y="192" text-anchor="end">D4</text>
+          <rect x="46" y="204" width="14" height="9" fill="var(--accent)"></rect>
+          <text class="s-pin t-acc" x="40" y="212" text-anchor="end">D5</text>
+          <rect x="46" y="224" width="14" height="9" fill="var(--line-strong)"></rect>
+          <text class="s-pin" x="40" y="232" text-anchor="end">D6</text>
+        </g>
+        <!-- rechte Pins -->
+        <g>
+          <rect x="180" y="104" width="14" height="9" fill="var(--line-strong)"></rect>
+          <text class="s-pin" x="200" y="112">5V</text>
+          <rect x="180" y="124" width="14" height="9" fill="var(--accent)"></rect>
+          <text class="s-pin t-acc" x="200" y="132">GND</text>
+          <rect x="180" y="144" width="14" height="9" fill="var(--accent)"></rect>
+          <text class="s-pin t-acc" x="200" y="152">3V3</text>
+          <rect x="180" y="164" width="14" height="9" fill="var(--accent)"></rect>
+          <text class="s-pin t-acc" x="200" y="172">D10</text>
+          <rect x="180" y="184" width="14" height="9" fill="var(--accent)"></rect>
+          <text class="s-pin t-acc" x="200" y="192">D9</text>
+          <rect x="180" y="204" width="14" height="9" fill="var(--line-strong)"></rect>
+          <text class="s-pin" x="200" y="212">D8</text>
+          <rect x="180" y="224" width="14" height="9" fill="var(--line-strong)"></rect>
+          <text class="s-pin" x="200" y="232">D7</text>
+        </g>
+        <text class="s-note" x="60" y="278">blau = D0, D5, D9, D10, 3V3, GND — die 6 Pins, die wir benutzen</text>
+        <text class="s-note" x="60" y="294">B+ / B− liegen als Lötpads auf der Unterseite</text>
+
+        <!-- 2N7000 -->
+        <text class="s-lbl-b" x="360" y="24">2N7000</text>
+        <text class="s-note"  x="360" y="42">TO-92, flache Seite zu dir, Beine nach unten</text>
+
+        <path d="M 380 70 A 46 46 0 0 1 472 70 L 472 128 L 380 128 Z"
+              fill="var(--surface-2)" stroke="currentColor" stroke-width="1.5"></path>
+        <line x1="380" y1="128" x2="472" y2="128" stroke="currentColor" stroke-width="2.5"></line>
+        <text class="s-sub" x="426" y="104" text-anchor="middle">2N7000</text>
+        <line class="w-gnd" x1="398" y1="128" x2="398" y2="176"></line>
+        <line class="w-gnd" x1="426" y1="128" x2="426" y2="176"></line>
+        <line class="w-gnd" x1="454" y1="128" x2="454" y2="176"></line>
+        <text class="s-pin" x="398" y="194" text-anchor="middle">S</text>
+        <text class="s-pin" x="426" y="194" text-anchor="middle">G</text>
+        <text class="s-pin" x="454" y="194" text-anchor="middle">D</text>
+        <text class="s-sub" x="398" y="212" text-anchor="middle">Source</text>
+        <text class="s-sub" x="426" y="212" text-anchor="middle">Gate</text>
+        <text class="s-sub" x="454" y="212" text-anchor="middle">Drain</text>
+        <text class="s-note" x="360" y="248">Merksatz: die flache Seite zeigt dich an,</text>
+        <text class="s-note" x="360" y="264">dann liest du S – G – D von links nach rechts.</text>
+
+        <!-- AO3401 auf Adapter -->
+        <text class="s-lbl-b" x="620" y="24">AO3401A</text>
+        <text class="s-note"  x="620" y="42">auf der SOT-23-Adapterplatine</text>
+
+        <rect class="s-box" x="640" y="66" width="140" height="82" rx="3"></rect>
+        <rect x="676" y="88" width="68" height="34" rx="2" fill="var(--line-strong)"></rect>
+        <text class="s-sub" x="710" y="110" text-anchor="middle" fill="var(--surface)">A19T</text>
+        <line class="w-gnd" x1="668" y1="148" x2="668" y2="188"></line>
+        <line class="w-gnd" x1="710" y1="148" x2="710" y2="188"></line>
+        <line class="w-gnd" x1="752" y1="148" x2="752" y2="188"></line>
+        <text class="s-pin" x="668" y="206" text-anchor="middle">1</text>
+        <text class="s-pin" x="710" y="206" text-anchor="middle">2</text>
+        <text class="s-pin" x="752" y="206" text-anchor="middle">3</text>
+        <text class="s-sub" x="668" y="224" text-anchor="middle">Gate</text>
+        <text class="s-sub" x="710" y="224" text-anchor="middle">Source</text>
+        <text class="s-sub" x="752" y="224" text-anchor="middle">Drain</text>
+        <text class="s-note" x="620" y="252">Die Adapterplatine hat 1-2-3 aufgedruckt.</text>
+        <text class="s-note" x="620" y="268">Löte den MOSFET nach dem Aufdruck,</text>
+        <text class="s-note" x="620" y="284">dann stimmen die Nummern.</text>
+      </svg>
+      <figcaption>
+        Die drei Bauteile, bei denen die Beinchen-Reihenfolge zählt. Beim XIAO sind
+        die sechs Pins blau markiert, die wir tatsächlich anschließen — die
+        restlichen acht bleiben frei.
+      </figcaption>
+    </figure>
+
+    <div class="note warn">
+      <p class="note-title">Im Zweifel messen</p>
+      <p>
+        Stell dein Multimeter auf Durchgangsprüfung mit Diodensymbol. Beim
+        <strong>2N7000</strong> misst du zwischen <span class="pin">S</span> und
+        <span class="pin">D</span> in einer Richtung ungefähr 0,6 V, in der anderen
+        nichts. Das mittlere Bein (<span class="pin">G</span>) zeigt in beide
+        Richtungen nichts an. So findest du das Gate sicher.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>Der Schalter, der alles ausmacht</h2>
+    </div>
+
+    <p>
+      Das ist das Herzstück der Stromspar-Idee, und der Teil, der auf einem
+      Schaltplan am unverständlichsten aussieht. Deshalb hier ausführlich.
+    </p>
+    <p>
+      Das Problem: Der Step-Up zieht auch im Leerlauf ein bis zwei Milliampere. Über
+      einen Tag sind das 24 bis 48 mAh — dein Akku wäre in sechs Wochen leer. Also
+      trennen wir ihn komplett vom Akku, wenn nicht gemessen wird.
+    </p>
+    <p>
+      Warum zwei Transistoren und nicht einer? Der <strong>AO3401</strong> sitzt in
+      der Plusleitung und muss deshalb an seinem Gate eine Spannung <em>über</em>
+      Akkuniveau sehen, um zu sperren. Das kann ein ESP-Pin mit 3,3 V nicht. Der
+      kleine <strong>2N7000</strong> übersetzt das: Der ESP steuert den 2N7000, und
+      der 2N7000 zieht das Gate des AO3401 nach unten.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 860 420" role="img" aria-label="Der MOSFET-Schalter: Der Akkupluspol geht auf Source von AO3401 und über 100 Kiloohm auf dessen Gate. Das Gate hängt außerdem am Drain des 2N7000. Der ESP-Pin D0 steuert das Gate des 2N7000, das mit 10 Kiloohm nach Masse gezogen wird. Der Drain des AO3401 speist den Step-Up.">
+        <defs>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"></path>
+          </marker>
+        </defs>
+
+        <!-- Plus-Schiene -->
+        <line class="w-pos" x1="40" y1="60" x2="660" y2="60"></line>
+        <text class="s-pin t-pos" x="40" y="48">VBAT-Schiene  (3,7 V)</text>
+        <circle class="node" cx="200" cy="60" r="4" fill="var(--wire-pos)"></circle>
+        <circle class="node" cx="380" cy="60" r="4" fill="var(--wire-pos)"></circle>
+
+        <!-- Masse-Schiene -->
+        <line class="w-gnd" x1="40" y1="374" x2="800" y2="374"></line>
+        <text class="s-pin t-gnd" x="40" y="396">Masse  (GND)</text>
+
+        <!-- 100k vom Plus zum Gate -->
+        <line class="w-pos" x1="200" y1="60" x2="200" y2="120"></line>
+        <rect x="182" y="120" width="36" height="54" rx="2" fill="var(--surface)" stroke="var(--wire-pos)" stroke-width="2"></rect>
+        <text class="s-pin t-pos" x="152" y="152" text-anchor="end">100 kΩ</text>
+        <line class="w-pos" x1="200" y1="174" x2="200" y2="228"></line>
+
+        <!-- AO3401 -->
+        <rect class="s-box-a" x="330" y="120" width="120" height="76" rx="3"></rect>
+        <text class="s-lbl-b" x="390" y="150" text-anchor="middle">AO3401</text>
+        <text class="s-sub"   x="390" y="168" text-anchor="middle">P-Kanal</text>
+        <text class="s-sub"   x="390" y="184" text-anchor="middle">der grosse Schalter</text>
+
+        <!-- Source oben -->
+        <line class="w-pos" x1="380" y1="60" x2="380" y2="120"></line>
+        <text class="s-pin t-pos" x="392" y="98">2 Source</text>
+
+        <!-- Gate links -->
+        <line class="w-pos" x1="200" y1="228" x2="330" y2="228"></line>
+        <line class="w-pos" x1="330" y1="228" x2="330" y2="196"></line>
+        <text class="s-pin t-pos" x="252" y="220">1 Gate</text>
+        <circle class="node" cx="200" cy="228" r="4" fill="var(--wire-pos)"></circle>
+
+        <!-- Drain rechts -->
+        <line class="w-pos" x1="450" y1="158" x2="560" y2="158" marker-end="url(#ar2)"></line>
+        <text class="s-pin t-pos" x="460" y="146">3 Drain</text>
+
+        <!-- Step-Up -->
+        <rect class="s-box" x="560" y="120" width="130" height="76" rx="3"></rect>
+        <text class="s-lbl-b" x="625" y="150" text-anchor="middle">Pololu</text>
+        <text class="s-sub"   x="625" y="168" text-anchor="middle">Step-Up 15 V fest</text>
+        <text class="s-sub"   x="625" y="184" text-anchor="middle">VIN / GND</text>
+        <line class="w-gnd" x1="625" y1="196" x2="625" y2="374"></line>
+        <line class="w-pos" x1="690" y1="158" x2="790" y2="158" marker-end="url(#ar2)"></line>
+        <text class="s-pin t-pos" x="740" y="146" text-anchor="middle">15 V</text>
+        <text class="s-sub" x="740" y="176" text-anchor="middle">zur Sonde</text>
+
+        <!-- 2N7000 -->
+        <rect class="s-box" x="140" y="272" width="120" height="66" rx="3"></rect>
+        <text class="s-lbl-b" x="200" y="300" text-anchor="middle">2N7000</text>
+        <text class="s-sub"   x="200" y="318" text-anchor="middle">der kleine Helfer</text>
+
+        <!-- Drain 2N7000 hoch zum Gate-Knoten -->
+        <line class="w-pos" x1="200" y1="272" x2="200" y2="228"></line>
+        <text class="s-pin" x="212" y="256">D</text>
+
+        <!-- Source 2N7000 nach GND -->
+        <line class="w-gnd" x1="200" y1="338" x2="200" y2="374"></line>
+        <text class="s-pin" x="212" y="360">S</text>
+
+        <!-- Gate 2N7000 -->
+        <line class="w-ctl" x1="140" y1="305" x2="76" y2="305"></line>
+        <text class="s-pin" x="130" y="296" text-anchor="end">G</text>
+        <line class="w-ctl" x1="76" y1="305" x2="76" y2="252"></line>
+        <text class="s-pin t-acc" x="66" y="242" text-anchor="middle">D0</text>
+        <text class="s-sub t-acc" x="66" y="226" text-anchor="middle">vom XIAO</text>
+
+        <!-- 10k Pulldown -->
+        <line class="w-gnd" x1="76" y1="305" x2="76" y2="322"></line>
+        <circle class="node" cx="76" cy="305" r="4" fill="var(--accent)"></circle>
+        <rect x="58" y="322" width="36" height="34" rx="2" fill="var(--surface)" stroke="var(--wire-gnd)" stroke-width="2"></rect>
+        <text class="s-pin t-gnd" x="106" y="344">10 kΩ</text>
+        <line class="w-gnd" x1="76" y1="356" x2="76" y2="374"></line>
+      </svg>
+      <figcaption>
+        Der 100-kΩ-Widerstand hält das Gate des AO3401 oben, solange nichts passiert
+        — dann ist der Schalter zu. Der 10-kΩ-Widerstand hält das Gate des 2N7000
+        unten, solange der ESP schläft. Beide sorgen dafür, dass der Ruhezustand
+        „aus“ ist, auch wenn der ESP gar nichts tut.
+      </figcaption>
+    </figure>
+
+    <h3>So läuft eine Messung ab</h3>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th class="num">Zeit</th><th>Was passiert</th><th>Schalter</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="num">— </td><td>ESP schläft. <span class="pin">D0</span> ist hochohmig, der 10 kΩ zieht das 2N7000-Gate auf Masse.</td><td>zu</td></tr>
+          <tr><td class="num">0,0 s</td><td>ESP wacht auf und legt <span class="pin">D0</span> auf 3,3 V.</td><td>öffnet</td></tr>
+          <tr><td class="num">0,0 s</td><td>2N7000 leitet und zieht das AO3401-Gate auf Masse.</td><td>offen</td></tr>
+          <tr><td class="num">0,0 s</td><td>AO3401 leitet, der Step-Up bekommt Strom und macht 15 V.</td><td>offen</td></tr>
+          <tr><td class="num">0,8 s</td><td>Sonde ist eingeschwungen. Der ADS1115 misst sieben Mal.</td><td>offen</td></tr>
+          <tr><td class="num">1,3 s</td><td>ESP legt <span class="pin">D0</span> auf 0 V. Alles wieder aus.</td><td>zu</td></tr>
+          <tr><td class="num">4 s</td><td>Wert ist bei Home Assistant. ESP legt sich schlafen.</td><td>zu</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2>Wie aus Strom eine Zahl wird</h2>
+    </div>
+
+    <p>
+      Die Sonde ist eine Stromquelle. Sie stellt den Strom so ein, dass er zum
+      Wasserdruck passt — egal wie lang das Kabel ist. Das ist der Grund, warum
+      4–20 mA über 5 Meter Kabel im nassen Schacht zuverlässig funktioniert und eine
+      Spannung das nicht täte.
+    </p>
+    <p>
+      Um daraus etwas Messbares zu machen, schicken wir den Strom durch einen
+      Widerstand. Über dem Widerstand fällt dann eine Spannung ab, und die kann der
+      ADS1115 lesen.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 860 300" role="img" aria-label="Der Messkreis: 15 Volt vom Step-Up gehen über die braune Ader zur Sonde, von dort über die blaue Ader zum Messpunkt. Vom Messpunkt geht es über den 100-Ohm-Widerstand nach Masse, und ein Abgriff führt über einen 2-Kiloohm-Schutzwiderstand zu Eingang A0 des ADS1115.">
+        <defs>
+          <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"></path>
+          </marker>
+        </defs>
+
+        <rect class="s-box" x="20" y="40" width="120" height="66" rx="3"></rect>
+        <text class="s-lbl-b" x="80" y="68" text-anchor="middle">Step-Up</text>
+        <text class="s-sub"   x="80" y="86" text-anchor="middle">OUT+ 15 V</text>
+
+        <line class="w-brown" x1="140" y1="73" x2="290" y2="73" marker-end="url(#ar3)"></line>
+        <text class="s-sub" x="215" y="61" text-anchor="middle" fill="var(--wire-brown)">braune Ader</text>
+
+        <rect class="s-box" x="290" y="30" width="140" height="86" rx="3"></rect>
+        <text class="s-lbl-b" x="360" y="60" text-anchor="middle">Sonde</text>
+        <text class="s-sub"   x="360" y="78" text-anchor="middle">QDY30A</text>
+        <text class="s-sub"   x="360" y="96" text-anchor="middle">stellt den Strom ein</text>
+
+        <line class="w-sig" x1="430" y1="73" x2="600" y2="73" marker-end="url(#ar3)"></line>
+        <text class="s-sub t-sig" x="515" y="61" text-anchor="middle">blaue Ader</text>
+
+        <!-- Messpunkt -->
+        <circle class="node" cx="600" cy="73" r="5" fill="var(--wire-sig)"></circle>
+        <text class="s-pin t-sig" x="600" y="52" text-anchor="middle">Messpunkt</text>
+
+        <!-- runter durch den Widerstand -->
+        <line class="w-sig" x1="600" y1="73" x2="600" y2="130"></line>
+        <rect x="580" y="130" width="40" height="60" rx="2" fill="var(--surface)" stroke="var(--wire-sig)" stroke-width="2"></rect>
+        <text class="s-pin t-sig" x="640" y="156">100 Ω</text>
+        <text class="s-sub"     x="640" y="174">0,1 % Toleranz</text>
+        <line class="w-gnd" x1="600" y1="190" x2="600" y2="238"></line>
+
+        <!-- Masse -->
+        <line class="w-gnd" x1="540" y1="238" x2="660" y2="238"></line>
+        <line class="w-gnd" x1="562" y1="248" x2="638" y2="248"></line>
+        <line class="w-gnd" x1="580" y1="258" x2="620" y2="258"></line>
+        <text class="s-sub t-gnd" x="600" y="278" text-anchor="middle">GND</text>
+
+        <!-- Abgriff zum ADS -->
+        <line class="w-sig" x1="600" y1="73" x2="760" y2="73" marker-end="url(#ar3)"></line>
+        <rect x="654" y="56" width="44" height="34" rx="2" fill="var(--surface)" stroke="var(--wire-sig)" stroke-width="2"></rect>
+        <text class="s-pin t-sig" x="676" y="110" text-anchor="middle">2 kΩ</text>
+        <text class="s-sub" x="676" y="126" text-anchor="middle">Schutz</text>
+        <rect class="s-box-a" x="700" y="120" width="130" height="66" rx="3"></rect>
+        <line class="w-sig" x1="760" y1="73" x2="760" y2="120"></line>
+        <text class="s-lbl-b" x="765" y="150" text-anchor="middle">ADS1115</text>
+        <text class="s-sub"   x="765" y="168" text-anchor="middle">Eingang A0</text>
+      </svg>
+      <figcaption>
+        Der Abgriff zum ADS1115 zapft nichts ab — er misst nur mit. Deshalb ist es
+        egal, dass dort ein zweiter Draht hängt. Der <strong>2-kΩ-Widerstand</strong>
+        tut im Normalbetrieb nichts. Er rettet den ADS1115 nur, wenn der 100 Ω
+        abreißt und sich der Sondenstrom einen anderen Weg sucht.
+      </figcaption>
+    </figure>
+
+    <h3>Was dabei herauskommt</h3>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Wasserstand</th><th class="num">Strom</th><th class="num">Spannung am 100 Ω</th><th class="num">Liter</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>leer</td><td class="num">4,0 mA</td><td class="num">0,400 V</td><td class="num">0</td></tr>
+          <tr><td>halb</td><td class="num">12,0 mA</td><td class="num">1,200 V</td><td class="num">2 250</td></tr>
+          <tr><td>voll (2,00 m)</td><td class="num">20,0 mA</td><td class="num">2,000 V</td><td class="num">4 500</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <p class="note-title">Warum ausgerechnet 100 Ω</p>
+      <p>
+        Weil die Rechnung dann im Kopf aufgeht: Spannung in Volt mal 10 ergibt den
+        Strom in Milliampere. Und weil 2,0 V sicher unter den 3,3 V bleibt, die der
+        ADS1115 verträgt. Der Widerstand muss <strong>0,1 % Toleranz</strong> haben —
+        ein normaler 5-%-Widerstand würde deine Anzeige um bis zu 10 cm verschieben,
+        dauerhaft und unbemerkt.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <h2>Die Anschlussliste</h2>
+    </div>
+
+    <p>
+      Das hier ist die eigentliche Bauanleitung. Jede Zeile ist eine Drahtverbindung.
+      Arbeite sie von oben nach unten ab und hake ab, was fertig ist.
+    </p>
+    <p>
+      <strong>GND</strong> heißt: alles, was hier steht, kommt auf dieselbe
+      Masseleitung. Zieh dir dafür auf der Lochrasterplatine eine durchgehende
+      Masseschiene aus blankem Draht — das spart dir viel Fädelei.
+    </p>
+
+    <h3>Akku und Masse</h3>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th class="chk">✓</th><th class="num">Nr.</th><th>Von</th><th>Nach</th><th>Hinweis</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">1</td><td>JST-<strong>Buchse</strong> rot</td><td>VBAT-Schiene</td><td>Loch <code>16/1</code>. Hier steckt der Akku ein.</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">2</td><td>JST-<strong>Buchse</strong> schwarz</td><td>GND-Schiene</td><td>Loch <code>13/10</code></td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">3</td><td>JST-<strong>Stecker</strong> rot</td><td>VBAT-Schiene</td><td>Loch <code>15/1</code>. Geht zum XIAO.</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">4</td><td>JST-<strong>Stecker</strong> schwarz</td><td>GND-Schiene</td><td>Loch <code>12/10</code></td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">5</td><td>Kabel mit JST-Buchse, ca. 8 cm</td><td>XIAO Pads <span class="pin">B+</span> / <span class="pin">B−</span></td><td>Unterseite, neben <span class="pin">D5</span> / <span class="pin">D8</span>. <strong>Vor</strong> dem Einstecken löten!</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Der Schalter</h3>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th class="chk">✓</th><th class="num">Nr.</th><th>Von</th><th>Nach</th><th>Hinweis</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">6</td><td>VBAT-Schiene</td><td>AO3401 <span class="pin">Pin 2</span></td><td>Source</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">7</td><td>VBAT-Schiene</td><td>100 kΩ</td><td>ein Bein</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">8</td><td>100 kΩ anderes Bein</td><td>AO3401 <span class="pin">Pin 1</span></td><td>Gate</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">9</td><td>AO3401 <span class="pin">Pin 1</span></td><td>2N7000 <span class="pin">D</span></td><td>rechtes Bein (TO-92)</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">10</td><td>2N7000 <span class="pin">S</span></td><td>GND</td><td>linkes Bein</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">11</td><td>2N7000 <span class="pin">G</span></td><td>XIAO <span class="pin">D0</span></td><td>mittleres Bein</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">12</td><td>2N7000 <span class="pin">G</span></td><td>10 kΩ</td><td>—</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">13</td><td>10 kΩ anderes Bein</td><td>GND</td><td>—</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">14</td><td>AO3401 <span class="pin">Pin 3</span></td><td>Pololu <span class="pin">VIN</span></td><td>Drain</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">15</td><td>Pololu <span class="pin">GND</span></td><td>GND-Schiene</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Sonde und Messwiderstand</h3>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th class="chk">✓</th><th class="num">Nr.</th><th>Von</th><th>Nach</th><th>Hinweis</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">16</td><td>Pololu <span class="pin">VOUT</span></td><td>Sonde <strong>braun</strong></td><td>15 V fest, nichts einzustellen</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">17</td><td>Sonde <strong>blau</strong></td><td>Messpunkt</td><td>ein freies Lötauge</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">18</td><td>Messpunkt</td><td>100 Ω (0,1 %) oberes Bein</td><td>—</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">19</td><td>100 Ω unteres Bein = <strong>Sternpunkt</strong> <code>4/8</code></td><td>GND-Schiene <code>4/10</code></td><td><strong>dicker</strong> Draht, trägt den Sondenstrom</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">20</td><td>Messpunkt → <strong>2 kΩ</strong></td><td>ADS1115 <span class="pin">A0</span></td><td>Schutzwiderstand, 5 % reichen</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>ADS1115</h3>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th class="chk">✓</th><th class="num">Nr.</th><th>Von</th><th>Nach</th><th>Hinweis</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">21</td><td>ADS1115 <span class="pin">VDD</span></td><td>XIAO <span class="pin">3V3</span></td><td><strong>nicht</strong> 5V</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">22</td><td>ADS1115 <span class="pin">GND</span></td><td><strong>Sternpunkt</strong> <code>4/8</code></td><td><strong>dünner</strong> Draht. <strong>Nicht</strong> an die GND-Schiene!</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">23</td><td>ADS1115 <span class="pin">SDA</span></td><td>XIAO <span class="pin">D9</span></td><td>GPIO20</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">24</td><td>ADS1115 <span class="pin">SCL</span></td><td>XIAO <span class="pin">D10</span></td><td>GPIO18</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">25</td><td>ADS1115 <span class="pin">ADDR</span></td><td>GND</td><td>ergibt Adresse 0x48</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Akkumessung und Antenne</h3>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th class="chk">✓</th><th class="num">Nr.</th><th>Von</th><th>Nach</th><th>Hinweis</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">26</td><td>VBAT-Schiene</td><td>220 kΩ (der erste)</td><td>—</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">27</td><td>erster 220 kΩ</td><td>Teilerpunkt</td><td>zweiter freier Lötpunkt</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">28</td><td>Teilerpunkt</td><td>ADS1115 <span class="pin">A1</span></td><td>—</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">29</td><td>Teilerpunkt</td><td>220 kΩ (der zweite)</td><td>—</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">30</td><td>zweiter 220 kΩ</td><td>XIAO <span class="pin">D5</span></td><td><strong>nicht</strong> an GND!</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">31</td><td>u.FL-Antenne</td><td>Buchse auf dem XIAO</td><td>senkrecht in die Box legen</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Klima-Sensor SHT41</h3>
+    <p>
+      Alle vier Leitungen kommen <strong>direkt vom XIAO</strong>, nicht vom
+      ADS1115 durchgeschleift.
+    </p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th class="chk">✓</th><th class="num">Nr.</th><th>Von</th><th>Nach</th><th>Hinweis</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">32</td><td>SHT41 <span class="pin">VIN</span> <em>(Pin 1)</em></td><td>XIAO <span class="pin">3V3</span></td><td><strong>nicht</strong> 5V — das Modul hat keinen Regler!</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">33</td><td>SHT41 <span class="pin">GND</span> <em>(Pin 2)</em></td><td>GND-Schiene</td><td><strong>nicht</strong> an den Sternpunkt!</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">34</td><td>SHT41 <span class="pin">SCL</span> <em>(Pin 3)</em></td><td>XIAO <span class="pin">D10</span></td><td>GPIO18</td></tr>
+          <tr><td class="chk"><input type="checkbox"></td><td class="num">35</td><td>SHT41 <span class="pin">SDA</span> <em>(Pin 4)</em></td><td>XIAO <span class="pin">D9</span></td><td>GPIO20</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <p class="note-title">SCL kommt vor SDA</p>
+      <p>
+        Das verbaute Modul ist ein lila CJMCU-Breakout mit <strong>vier
+        Pins</strong>. Die Beschriftung steht auf der Bauteilseite, gelesen von
+        links nach rechts:
+      </p>
+      <pre><code>  Pin 1     Pin 2     Pin 3     Pin 4
+   VIN       GND       SCL       SDA
+    |         |         |         |
+  XIAO      GND-      XIAO      XIAO
+   3V3     Schiene     D10        D9</code></pre>
+      <p>
+        <strong>Die übliche Reihenfolge ist umgedreht.</strong> Man sagt immer
+        „SDA und SCL“, aber auf diesem Modul sitzt SCL zuerst. Wer nach Gefühl
+        lötet, vertauscht die beiden.
+      </p>
+      <p>
+        <strong>Das Modul hat keinen Spannungsregler.</strong> Auf der Platine
+        sitzen nur der Sensor, zwei Pull-up-Widerstände und ein Kondensator.
+        <code>VIN</code> geht direkt an den Chip, und der hält nur 3,6 V aus. Also
+        <span class="pin">3V3</span>, niemals <span class="pin">5V</span>.
+      </p>
+      <p>
+        Adresse ist <code>0x44</code> und fest im Chip. Kein ADDR-Pin, nichts
+        einzustellen. Es reicht eine <strong>4-polige Buchsenleiste</strong>.
+      </p>
+    </div>
+
+    <div class="note">
+      <p class="note-title">Vor dem Löten: Pull-ups prüfen</p>
+      <p>
+        Der I²C-Bus braucht zwei Widerstände, die <span class="pin">SDA</span> und
+        <span class="pin">SCL</span> auf 3,3 V hochziehen. Fast alle
+        ADS1115-Module haben die schon drauf — aber nicht alle.
+      </p>
+      <p>
+        Prüfen: Multimeter auf Widerstand, eine Spitze an <span class="pin">VDD</span>,
+        die andere an <span class="pin">SDA</span>. Es sollten ungefähr
+        <strong>4,7 bis 10 kΩ</strong> zu messen sein. Dasselbe für
+        <span class="pin">SCL</span>. Wenn du dort „unendlich“ misst, löte je einen
+        <strong>4,7-kΩ-Widerstand</strong> von SDA nach 3V3 und von SCL nach 3V3.
+      </p>
+      <p>
+        Ohne diese Widerstände findet der ESP den ADS1115 gar nicht — und der Fehler
+        sieht aus wie ein Verdrahtungsfehler, ist aber keiner.
+      </p>
+      <p>
+        <strong>Zwei Module, zwei Sätze Pull-ups.</strong> Haben ADS1115 und SHT41
+        beide welche, liegen sie parallel. Zweimal 10 kΩ ergeben 5 kΩ — gut.
+        Zweimal 2,2 kΩ ergeben 1,1 kΩ, und dann zieht der Bus 3 mA. Das ist die
+        Obergrenze. Miss mit gestecktem SHT41 nochmal <span class="pin">VIN</span>
+        gegen <span class="pin">SDA</span>: <strong>unter 2 kΩ ist zu wenig</strong>.
+        Dann auf einem der beiden Module die Pull-ups auslöten.
+      </p>
+      <p>
+        Auf dem lila CJMCU-Modul sitzen zwei Widerstände mit dem Aufdruck
+        <code>103</code>. Das sind <strong>10 kΩ</strong>. Zusammen mit den
+        üblichen 10 kΩ auf dem ADS1115 ergibt das 5 kΩ — genau richtig. Du
+        musst also voraussichtlich nichts ändern. Nachmessen schadet trotzdem
+        nicht.
+      </p>
+    </div>
+
+    <div class="note">
+      <p class="note-title">Warum Nr. 30 nicht an Masse geht</p>
+      <p>
+        Ein Spannungsteiler direkt zwischen Akku und Masse würde rund um die Uhr
+        Strom ziehen. Weil das untere Ende stattdessen an <span class="pin">D5</span>
+        hängt, schaltet der ESP den Teiler mit ein — und lässt den Pin im Tiefschlaf
+        los. Dann fließt dort gar nichts.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">06</span>
+      <h2>Bauen, Schritt für Schritt</h2>
+    </div>
+
+    <p>
+      Die Reihenfolge ist wichtig. Nach jedem Schritt kommt ein Test. Wenn ein Test
+      nicht stimmt, such den Fehler <em>dort</em> — nicht drei Schritte später, wenn
+      alles zusammenhängt.
+    </p>
+
+    <div class="note">
+      <p class="note-title">Welcher Schritt schon geprüft ist</p>
+      <p>
+        Steht in <code>docs/pruefplan.md</code>. Die gemessenen Zahlen mit Datum
+        und Methode stehen in <code>docs/messungen.md</code>.
+      </p>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="step-n">1</span><h3>Step-Up prüfen — 15 V sind fest</h3></div>
+      <p>
+        Der <strong>Pololu U3V16F15</strong> liefert fest 15 V. Er hat
+        <strong>keinen Trimmer</strong>. Es gibt nichts einzustellen. Klemm ihn kurz
+        an 3,7 bis 4,2 V und miss am Ausgang nach.
+      </p>
+      <div class="note warn">
+        <p class="note-title">Nicht den MT3608 nehmen</p>
+        <p>
+          Ältere Fassungen dieser Anleitung nannten den MT3608 mit Trimmer. Der ist
+          Ausschuss — Begründung in <code>docs/faq.md</code>. Ersetzt durch
+          den Pololu mit fester Spannung.
+        </p>
+      </div>
+      <p>
+        Warum 15 und nicht 12: Die Sonde will mindestens 12 V an ihren eigenen
+        Klemmen. Am 100-Ω-Widerstand fallen aber schon 2 V ab. Bei 12 V bekäme sie
+        nur 10 V.
+      </p>
+      <div class="check">
+        <span class="check-label">Prüfen</span>
+        <p>Multimeter am Ausgang zeigt 15,0 V ± 0,6 V (das Modul hat 4 % Toleranz). Sonde ist noch <strong>nicht</strong> angeschlossen.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="step-n">2</span><h3>MOSFET auf die Adapterplatine löten</h3></div>
+      <p>
+        Der AO3401 ist winzig. Leg die Adapterplatine hin, verzinn ein Pad, setz den
+        MOSFET mit einer Pinzette so auf, dass die Beinchen zu den Nummern 1-2-3 auf
+        dem Aufdruck passen, und löte erst dieses eine Bein. Danach die anderen zwei.
+      </p>
+      <div class="check">
+        <span class="check-label">Prüfen</span>
+        <p>
+          Mit der Lupe: kein Zinn zwischen zwei Beinchen.<br>
+          Diodentest rot an <span class="pin">Pin 3</span>, schwarz an
+          <span class="pin">Pin 2</span> → <strong>0,4 bis 0,7 V</strong>
+          (das ist die Body-Diode).<br>
+          Andersherum → <strong>OL</strong>. Leitet es in beide Richtungen, ist der
+          MOSFET tot.<br>
+          <span class="pin">Pin 1</span> gegen <span class="pin">Pin 2</span> und gegen
+          <span class="pin">Pin 3</span> → in <em>beide</em> Richtungen
+          <strong>OL</strong>. Das Gate ist isoliert. Alles andere ist eine Zinnbrücke.
+        </p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="step-n">3</span><h3>Schalter aufbauen — Nr. 6 bis 15</h3></div>
+      <p>
+        Jetzt die Zeilen 6 bis 15 der Anschlussliste. Die Sonde bleibt weg, der
+        ADS1115 auch. Nur Akku, die beiden MOSFETs, die zwei Widerstände und der
+        Step-Up.
+      </p>
+      <p>
+        <strong>Speise die Platine aus dem Labornetzteil, nicht aus dem Akku:</strong>
+        4,0 V, Strombegrenzung 200 mA. Ein LiPo liefert bei einem Fehler mehrere
+        Ampere, das Netzteil begrenzt. Beim Einschalten zuckt die Begrenzung kurz
+        — der Eingangskondensator lädt. Das ist normal.
+      </p>
+      <p>
+        Zum Testen brauchst du den ESP noch nicht: Häng statt
+        <span class="pin">D0</span> einen Draht ans Gate des 2N7000. Den legst du
+        von Hand an GND oder an die VBAT-Schiene.
+      </p>
+      <div class="check">
+        <span class="check-label">Prüfen</span>
+        <p>
+          Draht an GND → Pololu-Ausgang ist <strong>0 V</strong>.<br>
+          Draht an VBAT (+4 V) → Pololu-Ausgang ist <strong>15 V</strong>.<br>
+          Beides muss stimmen. Wenn der Ausgang immer 15 V hat, sitzt der AO3401 falsch herum.
+        </p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="step-n">4</span><h3>Ruhestrom messen — der wichtigste Test</h3></div>
+      <p>
+        Das Multimeter kommt <strong>in Reihe in die Plusleitung</strong>, also
+        dahin, wo der Strom in die Platine hineingeht. <strong>Nicht</strong> in
+        die 15-V-Leitung — im Aus-Zustand liegen dort gar keine 15 V, du wuerdest
+        nichts messen.
+      </p>
+      <pre><code>Netzteil +  ──► [µA]  MULTIMETER  [COM] ──►  VBAT-Schiene
+
+Netzteil −  ─────────────────────────►  GND-Schiene</code></pre>
+      <p>
+        Rote Strippe in die <strong>µA/mA-Buchse</strong>, nicht in die Volt- und
+        nicht in die 10-A-Buchse. Steuerdraht am <span class="pin">D0</span>-Sockel
+        an GND. Der XIAO bleibt draußen.
+      </p>
+      <div class="note">
+        <p class="note-title">Sicherung schonen</p>
+        <p>
+          Brücke das Messgerät beim Einschalten mit einer Krokoklemme und zieh sie
+          erst danach ab. So läuft der Einschaltstrom nicht durch die
+          µA-Sicherung.
+        </p>
+      </div>
+      <div class="check">
+        <span class="check-label">Prüfen</span>
+        <p>
+          <strong>Unter 10 µA.</strong> Wenn dort Milliampere fließen, ist der
+          Step-Up nicht wirklich getrennt — geh zurück zu Schritt 3.
+        </p>
+      </div>
+      <div class="note">
+        <p class="note-title">Erwartungswerte</p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>Zustand</th><th class="num">Strom</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="pin">D0</span> an GND (aus)</td><td class="num"><strong>0,0 µA</strong></td></tr>
+              <tr><td><span class="pin">D0</span> an VBAT (an, ohne Sonde)</td><td class="num">1138 µA</td></tr>
+              <tr><td><span class="pin">D0</span> wieder an GND</td><td class="num"><strong>0,0 µA</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          0,0 µA heißt: unter der Auflösung des Messgeräts. Der AO3401 trennt den
+          Pololu wirklich ab, und er tut es wiederholbar.
+        </p>
+        <p>
+          Die 1138 µA im Ein-Zustand sind der Leerlauf des Pololu. Er läuft pro
+          Messung nur 1,3 Sekunden, das sind rund <strong>0,01 mAh am Tag</strong>
+          — gegen die etwa 5 mAh Tagesbudget also 0,2 %. Kein Thema.
+        </p>
+        <p>
+          <strong>Das ist noch nicht die Zahl aus Test 4 des Prüfplans.</strong> Hier
+          fehlt der XIAO. Mit gestecktem, schlafendem XIAO werden daraus rund
+          16 µA. Das misst du am Ende von Schritt 5 nochmal.
+        </p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="step-n">5</span><h3>ADS1115, SHT41 und XIAO dazu — Nr. 21 bis 35</h3></div>
+      <p>
+        Erst die Buchsenleisten auf die Platine, dann den ADS1115 verdrahten, dann
+        das JST-Kabel an die Pads <span class="pin">B+</span> /
+        <span class="pin">B−</span> löten, <em>dann</em> den XIAO einstecken.
+        Der I²C-Bus liegt auf <span class="pin">D9</span> (SDA) und
+        <span class="pin">D10</span> (SCL). Am selben Bus hängt der
+        <strong>SHT41</strong> (Nr. 32 bis 35). Die Adressen stoßen sich nicht:
+        ADS1115 auf <code>0x48</code>, SHT41 auf <code>0x44</code>.
+      </p>
+      <p>
+        Flash jetzt <code>zisterne.yaml</code> auf den XIAO und schalte in Home
+        Assistant den Schalter <strong>„Zisterne wach bleiben“</strong> ein, damit er
+        nicht dauernd einschläft.
+      </p>
+      <div class="check">
+        <span class="check-label">Prüfen</span>
+        <p>
+          Im ESPHome-Log erscheinen <strong>beide</strong> Adressen im I²C-Scan:
+          <code>0x44</code> und <code>0x48</code>.<br>
+          <strong>Zisterne Akku</strong> zeigt 3,7 bis 4,2 V.<br>
+          <strong>Zisterne Box Temperatur</strong> zeigt ungefähr Raumtemperatur.<br>
+          <strong>Zisterne Box Feuchte</strong> zeigt 30 bis 60 %.
+        </p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="step-n">6</span><h3>Sonde anschließen und im Eimer testen</h3></div>
+      <p>
+        Jetzt Zeile 16 bis 20. Sonde in einen Eimer mit Wasser, Tiefe mit dem
+        Zollstock messen.
+      </p>
+      <div class="check">
+        <span class="check-label">Prüfen</span>
+        <p>
+          30 cm Wasser → Anzeige 0,30 m ± 2 cm.<br>
+          Sonde 10 cm anheben → Wert sinkt um 10 cm.<br>
+          Sonde ganz raus → Wert geht auf 0.
+        </p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="step-n">7</span><h3>Lackieren</h3></div>
+      <p>
+        Der Schutzlack ist <strong>Kontakt Chemie Plastik 70</strong>. Er schützt
+        das, was du selbst gelötet hast — die Module bringen ihren Schutz ab Werk
+        mit. Lackiert wird <strong>außerhalb des Gehäuses</strong>.
+      </p>
+
+      <div class="note warn">
+        <p class="note-title">Erst abziehen, dann lackieren</p>
+        <p>
+          Drei Teile kommen <strong>runter</strong>, bevor die Dose aufgeht. Alle
+          drei stecken, keins ist gelötet:
+        </p>
+        <p>
+          <strong>Der XIAO.</strong> Auf ihm sitzen USB-C, BOOT, RESET und die
+          u.FL-Buchse — vier Dinge, die frei bleiben müssen. Abziehen ist
+          einfacher, als sie alle einzeln abzukleben.
+        </p>
+        <p>
+          <strong>Der SHT41.</strong> Abkleben reicht hier <em>nicht</em>. Der
+          Sensor ist nicht nur gegen Lacktropfen empfindlich, sondern gegen
+          <strong>Lösemitteldämpfe</strong>. Die gehen durch jedes Klebeband und
+          verschieben die Feuchteanzeige dauerhaft.
+        </p>
+        <p>
+          <strong>Der Akku.</strong> Eine lackierte Platine ist kurzzeitig
+          leitfähig, solange das Lösemittel drin ist. Und Plastik 70 ist brennbar —
+          ein angeschlossener LiPo daneben ist unnötig.
+        </p>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th class="chk">✓</th><th class="num">Nr.</th><th>Vorbereiten</th><th>Warum</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">1</td><td>XIAO abziehen</td><td>USB-C, BOOT, RESET, u.FL bleiben frei</td></tr>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">2</td><td>SHT41 abziehen</td><td>Lösemitteldämpfe verstimmen ihn dauerhaft</td></tr>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">3</td><td>Akku abziehen</td><td>Platine spannungsfrei, kein LiPo neben Lösemittel</td></tr>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">4</td><td><strong>Buchsenleisten zustopfen</strong></td><td>Eine Stiftleiste als Platzhalter reinstecken. Sonst läuft Lack in die Kontakte und der XIAO steckt ohne Verbindung.</td></tr>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">5</td><td>SHT41-Header abkleben</td><td>gleicher Grund</td></tr>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">6</td><td>Akku-JST auf der Platine abkleben</td><td>muss steckbar bleiben, kommt später Kontaktfett rein</td></tr>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">7</td><td>Steckbare Schraubklemmen abkleben</td><td>sollen sich öffnen lassen</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Dann sprühen: aus rund <strong>20 cm</strong>, <strong>zwei bis drei dünne
+        Schichten</strong> statt einer dicken, dazwischen je 15 Minuten. Beide
+        Seiten. Eine dicke Schicht reißt beim Temperaturwechsel, dünne halten.
+      </p>
+
+      <div class="note">
+        <p class="note-title">Den XIAO trotzdem nicht ganz auslassen</p>
+        <p>
+          Auf seiner <strong>Unterseite</strong> sitzen die Pads
+          <span class="pin">B+</span> / <span class="pin">B−</span> mit dem
+          angelöteten JST-Kabel — siehe Nr. 5 der Anschlussliste. Das sind deine
+          eigenen Lötstellen, und daran hängt der Akku. Korrodiert dort eine, ist
+          das Gerät tot und du musst in den Schacht.
+        </p>
+        <p>
+          Also: Sprüh etwas Plastik 70 in einen Deckel und <strong>pinsle nur den
+          Streifen zwischen den beiden Pinreihen</strong>. Die Stiftleisten selbst
+          bleiben frei — Lack auf den Pins heißt schlechter Kontakt im Sockel. Die
+          Oberseite bleibt komplett unlackiert.
+        </p>
+      </div>
+
+      <div class="note warn">
+        <p class="note-title">Kontaktfett erst nach dem Lackieren</p>
+        <p>
+          Vaseline oder Kontaktfett <strong>kriecht</strong>. Wo es hinkommt, haftet
+          der Lack nicht mehr — er bildet Inseln, die sich nach ein, zwei Jahren
+          ablösen. Und du siehst es erst, wenn die Box im Schacht hängt.
+        </p>
+        <p>
+          Deshalb: erst lackieren, <strong>24 Stunden an der Luft ausdampfen
+          lassen</strong> (nicht in der geschlossenen Box), und <em>dann</em> einen
+          Tropfen Fett in den Akku-Steckverbinder.
+        </p>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th class="chk">✓</th><th class="num">Nr.</th><th>Danach</th><th>Hinweis</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">8</td><td>24 h ausdampfen</td><td>offen, nicht in der Box</td></tr>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">9</td><td>Platzhalter und Klebeband ab</td><td>alles wieder frei</td></tr>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">10</td><td>Kontaktfett in den Akku-JST</td><td>ein Tropfen reicht</td></tr>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">11</td><td>XIAO, SHT41, Akku wieder stecken</td><td>XIAO-Ausrichtung prüfen</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <p class="note-title">Ein Ersatz-XIAO schadet nicht</p>
+        <p>
+          Vom Step-Up liegen zwei in der Einkaufsliste, mit der Begründung: du
+          willst nicht wegen 7 € nochmal in den Schacht. Der XIAO kostet 11 € und
+          hat die meisten beweglichen Teile — USB-Buchse, zwei Taster, u.FL-Stecker,
+          Funkmodul. Beim nächsten Bestellen einen dazulegen.
+        </p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="step-n">8</span><h3>Einbauen</h3></div>
+      <p>
+        Die Box wird <strong>hochkant</strong> an die senkrechte Schachtwand
+        geschraubt, Verschraubungen nach unten. Daraus ergibt sich die Anordnung
+        auf der Montageplatte.
+      </p>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Von oben nach unten</th><th>Warum</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Antenne</strong>, an der oberen Innenwand</td><td>möglichst weit vom Akku, mindestens 10 mm zur Platine</td></tr>
+            <tr><td><strong>Platine</strong>, quer (70 mm breit, 50 mm hoch)</td><td>die Platte ist nur 74 mm breit — quer passt Platine und Akku übereinander</td></tr>
+            <tr><td><strong>Akku</strong>, mit Kabelbinder</td><td>34 × 50 mm, passt in den freien Streifen</td></tr>
+            <tr><td><strong>Silica-Gel</strong>, ganz unten</td><td>siehe Kasten unten</td></tr>
+            <tr><td><strong>Verschraubung und Ventil</strong>, unten</td><td>Kondenswasser läuft ab statt rein</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        <strong>Die Platine kommt auf Abstandsbolzen</strong>, nicht direkt auf die
+        Platte. Die Lochrasterplatine hat Montagelöcher in den Ecken — miss nach,
+        ob M2 oder M3. Eine passende Schraube muss locker durchrutschen.
+      </p>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th class="chk">✓</th><th class="num">Nr.</th><th>Teil</th><th>Menge</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">1</td><td>Nylon-Abstandsbolzen <code>M2 × 10 mm</code>, Innengewinde beidseitig</td><td>4</td></tr>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">2</td><td>Nylon-Schrauben <code>M2 × 6 mm</code></td><td>8</td></tr>
+            <tr><td class="chk"><input type="checkbox"></td><td class="num">3</td><td>Bohrer <code>2,2 mm</code> für die Montageplatte</td><td>1</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Platine auflegen, durch die Löcher anzeichnen, Platte bohren, Bolzen von
+        unten durchschrauben, Platine drauf. <strong>Nur handfest</strong> — M2 in
+        Nylon reißt bei der kleinsten Übertreibung aus.
+      </p>
+
+      <div class="note">
+        <p class="note-title">Warum Nylon und nicht Metall</p>
+        <p>
+          Kein Rost im feuchten Schacht. Kein Metall unter der Antenne — genau
+          deshalb scheidet ja auch die Stahlblech-Montageplatte aus. Und kein
+          Kurzschluss: Die Platine ist doppelseitig, ein Metallbolzen kann unten ein
+          Pad berühren, das du oben nicht siehst.
+        </p>
+      </div>
+
+      <div class="note warn">
+        <p class="note-title">Silica-Gel und SHT41 gehören auseinander</p>
+        <p>
+          Der Sensor sitzt oben auf der Platine. Leg das <strong>Gel nach
+          unten</strong>, zum Ventil hin.
+        </p>
+        <p>
+          Liegt das Gel direkt beim Sensor, misst der die trockene Luft unmittelbar
+          am Gel. Die Box kann feucht sein, der Sensor meldet 40 %, und die Warnung
+          bei 60 % kommt nie. Weit auseinander misst er die Box statt das Gel.
+        </p>
+      </div>
+
+      <div class="note">
+        <p class="note-title">Der Akku liegt am tiefsten Punkt</p>
+        <p>
+          Bei senkrechter Box läuft Kondenswasser innen nach unten. Leg den Akku auf
+          zwei schmale Kunststoffstreifen, dann steht er nicht darin und die Luft
+          kommt drunter durch. Zwei Millimeter reichen.
+        </p>
+      </div>
+
+      <div class="note warn">
+        <p class="note-title">Dichtring außen, Gegenmutter innen</p>
+        <p>
+          Gilt für die Kabelverschraubung <strong>und</strong> das
+          Druckausgleichsventil: Der Dichtring gehört zwischen den Sechskantbund und
+          die <strong>Gehäuseaußenwand</strong>. Die Gegenmutter kommt innen, ohne
+          Dichtung.
+        </p>
+        <p>
+          Das Wasser ist außen — dort muss es gestoppt werden. Sitzt der Ring innen,
+          läuft Wasser erst ins Bohrloch und ins Gewinde und bleibt dort stehen.
+          Außerdem ist der Bund breit und glatt; Gegenmuttern haben oft Zähne, die
+          den Ring einschneiden.
+        </p>
+        <p>
+          Liegen <strong>zwei</strong> Ringe bei: Gummi nach außen unter den Bund,
+          harter oder gezahnter nach innen unter die Mutter.
+        </p>
+        <p>
+          <strong>Handfest plus eine Achtelumdrehung.</strong> Das Gehäuse ist
+          Polystyrol und spröde. Eine zu fest angezogene Mutter reißt das Bohrloch
+          ein, und der Riss wandert.
+        </p>
+      </div>
+
+      <p>
+        Zum Schluss: alles auf die Montageplatte, Silica-Gel dazu, Deckel zu.
+      </p>
+      <div class="check">
+        <span class="check-label">Prüfen</span>
+        <p>
+          Über Nacht draußen bei geschlossenem Deckel: innen trocken, Silica-Gel
+          noch nicht verfärbt. In Home Assistant bleibt
+          <strong>Zisterne Box Feuchte</strong> unter <strong>60 %</strong>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">07</span>
+      <h2>Häufige Fehler</h2>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Symptom</th><th>Wahrscheinliche Ursache</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Step-Up ist immer an, lässt sich nicht abschalten</td><td>AO3401 verdreht. Pin 2 muss an die VBAT-Schiene, Pin 3 an den Pololu.</td></tr>
+          <tr><td>Step-Up geht nie an</td><td>2N7000 verdreht (S und D vertauscht), oder der 10 kΩ hängt am falschen Bein.</td></tr>
+          <tr><td>Ruhestrom in Milliampere statt Mikroampere</td><td>Eine LED auf einem Modul. Kratz sie ab oder löte sie aus.</td></tr>
+          <tr><td>SHT41 wird nicht gefunden</td><td>SDA und SCL vertauscht, oder das Modul hängt an 5V statt 3V3. Im I²C-Scan muss <code>0x44</code> stehen.</td></tr>
+          <tr><td>Box Feuchte steigt über 60 %</td><td>Silica-Gel gesättigt. Wechseln. Bleibt es hoch: Dichtung der Verschraubung und das Druckausgleichselement prüfen.</td></tr>
+          <tr><td>ADS1115 wird nicht gefunden</td><td>SDA und SCL vertauscht, oder <span class="pin">ADDR</span> hängt frei statt an GND, oder dem Modul fehlen die I²C-Pull-ups (siehe Abschnitt 05).</td></tr>
+          <tr><td>Pegelwert steht fest bei 0</td><td>Sonde bekommt keine Spannung — miss am Step-Up-Ausgang während der Messung.</td></tr>
+          <tr><td>Pegelwert springt wild</td><td>Masseverbindung schlecht, oder der 100 Ω hat einen kalten Lötpunkt.</td></tr>
+          <tr><td>Akkuanzeige steht fest bei 0 V</td><td>Zeile 30 wurde an GND gelötet statt an <span class="pin">D5</span>.</td></tr>
+          <tr><td>Wert wandert mit dem Wetter</td><td>Die Belüftungskapillare im Sondenkabel ist gequetscht oder zugeklebt.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <p class="note-title">Die zwei Dinge, die alles kaputt machen</p>
+      <p>
+        <strong>Akku verpolt.</strong> Miss vor dem Einstecken nach, welcher Pin am
+        Akku Plus ist. Bei China-Zellen ist der Stecker oft andersherum belegt als
+        erwartet. Verpolt zerstört es den XIAO sofort.
+      </p>
+      <p>
+        <strong>Kapillare zugemacht.</strong> Im Sondenkabel liegt ein dünnes
+        Luftröhrchen. Es muss offen in der Box enden. Nicht abschneiden, nicht
+        knicken, nicht mit Heißkleber oder Vergussmasse zumachen.
+      </p>
+    </div>
+  </section>
+
+</div>
